@@ -50,8 +50,6 @@ public class SlideGenerator {
     private XMLSlideShow ppt = new XMLSlideShow();
     private double globalMaxSize = 100;
 
-
-
     public double getGlobalMaxSize() {
         return globalMaxSize;
     }
@@ -63,7 +61,6 @@ public class SlideGenerator {
     public void setGlobalMaxSize(Integer globalMaxSize) {
         this.globalMaxSize = globalMaxSize;
     }
-
 
     private XSLFSlideMaster defaultSlideMaster;
     private int slideFrameWidth;
@@ -209,11 +206,11 @@ public class SlideGenerator {
         }
     }
 
-    private void appendBlankSlide() {
+    public void appendBlankSlide() {
         ppt.createSlide();
     }
 
-    private void appendSlides(File powerpointFile, boolean headerFile) throws Exception {
+    public void appendSlides(File powerpointFile, boolean headerFile) throws Exception {
 
         srcPPT = new XMLSlideShow(new FileInputStream(powerpointFile));
 
@@ -230,7 +227,7 @@ public class SlideGenerator {
 
     }
 
-    private void appendText(File textFile) throws Exception {
+    public void appendText(File textFile) throws Exception {
         ArrayList<String> lines = new ArrayList<String>();
         loadTextData(textFile, lines);
         String descriptor = null;
@@ -290,14 +287,14 @@ public class SlideGenerator {
 
                 }
             }
-        }else{
+        } else {
             boolean previousBlank = true;
             for (String line : lines) {
-                if (line.trim().isEmpty()){
+                if (line.trim().isEmpty()) {
                     previousBlank = true;
                     continue;
-                }else{
-                    if (previousBlank){
+                } else {
+                    if (previousBlank) {
                         // new slide
                         slideData.add(new ArrayList<String>());
                         slideDataIndex++;
@@ -340,7 +337,8 @@ public class SlideGenerator {
         titleRun.setFontColor(Color.WHITE);
         titleRun.setFontFamily(TITLE_FONT);
         // System.out.println("Resizing title");
-        //resizeTextToBlock(title, this.slideFrameHeight * this.titlePercentage);
+        // resizeTextToBlock(title, this.slideFrameHeight *
+        // this.titlePercentage);
         resizeTextToBlock(title, title.getAnchor().getHeight());
         // selection of body place holder
         XSLFTextShape body = slide.getPlaceholder(1);
@@ -349,7 +347,7 @@ public class SlideGenerator {
         body.clearText();
         body.setTextAutofit(TextAutofit.NORMAL);
         // System.out.println("Body before anything");
-        //dumpShapeHeight(body);
+        // dumpShapeHeight(body);
 
         // adding new paragraph
         XSLFTextParagraph paragraph = body.addNewTextParagraph();
@@ -378,19 +376,19 @@ public class SlideGenerator {
             run.setFontSize(globalMaxSize);
 
         }
-        //dumpShapeHeight(body);
-       // resizeTextToBlock(body, this.slideFrameHeight * this.bodyPercentage);
+        // dumpShapeHeight(body);
+        // resizeTextToBlock(body, this.slideFrameHeight * this.bodyPercentage);
 
         resizeTextToBlock(body, body.getAnchor().getHeight());
     }
 
     private void loadTextData(File textFile, ArrayList<String> list) throws FileNotFoundException {
         scanner = new Scanner(textFile);
-        Scanner s = scanner.useDelimiter("\\n");
-        while (s.hasNext()) {
-            list.add(s.next());
+        // Scanner s = scanner.useDelimiter("\\n");
+        while (scanner.hasNextLine()) {
+            list.add(scanner.nextLine());
         }
-        s.close();
+        scanner.close();
     }
 
     private void dumpShapeHeight(XSLFTextShape shape) {
@@ -401,34 +399,31 @@ public class SlideGenerator {
 
     private void resizeTextToBlock(XSLFTextShape block, double targetHeight) {
 
-
         List<XSLFTextParagraph> paragraphs = block.getTextParagraphs();
 
-         System.out.println("Before resize (target height is " + targetHeight
-         + "):");
-         dumpShapeHeight(block);
+        System.out.println("Before resize (target height is " + targetHeight + "):");
+        dumpShapeHeight(block);
 
         double fontSize = paragraphs.get(0).getTextRuns().get(0).getFontSize();
         while (((block.getTextHeight()
-                //+ block.getBottomInset()
-                //+ block.getTopInset()
-                )
-                > targetHeight)
-//        if (blockHeight > targetHeight){
-//            fontSize *= targetHeight/blockHeight;
-//            setParaFontSize(paragraphs, fontSize);
-//            blockHeight = block.getTextHeight();
-//            TextAutofit fit = block.getTextAutofit();
-//
-//        }
-//        while ((blockHeight > targetHeight)
-                && fontSize > 2) {
+        // + block.getBottomInset()
+        // + block.getTopInset()
+        ) > targetHeight)
+            // if (blockHeight > targetHeight){
+            // fontSize *= targetHeight/blockHeight;
+            // setParaFontSize(paragraphs, fontSize);
+            // blockHeight = block.getTextHeight();
+            // TextAutofit fit = block.getTextAutofit();
+            //
+            // }
+            // while ((blockHeight > targetHeight)
+            && fontSize > 2) {
             // shrink by 1/8
             fontSize = fontSize * (1.0 - DECREMENT);
             // (re)set the font size on all text runs to make overall text block
             // fit
             setParaFontSize(paragraphs, fontSize);
-            //blockHeight = block.getTextHeight();
+            // blockHeight = block.getTextHeight();
             // System.out.println("After resize attempt " + ++iteration);
             // dumpShapeHeight(block);
         }
@@ -460,6 +455,128 @@ public class SlideGenerator {
         BufferedImage originalImage = ImageIO.read(in);
         currentImageHeight = originalImage.getHeight();
         currentImageWidth = originalImage.getWidth();
+    }
+
+    public void appendSpacedText(File textFile, Boolean callAndResponse, double maxSize) throws Exception {
+        ArrayList<String> lines = new ArrayList<String>();
+        loadTextData(textFile, lines);
+
+        String titleString = null;
+        int titleIndex = 0;
+        for (String line : lines) {
+            titleIndex++;
+            if (line.trim().length() > 0) {
+                titleString = line;
+                break;
+            }
+        }
+        if (titleString == null) {
+            // ignore empty files
+            return;
+        }
+        // clean up used data
+        for (int i = 0; i < titleIndex; i++) {
+            lines.remove(0);
+        }
+        // divvy the rest up into pages
+
+        int slideDataIndex = -1;
+
+        List<List<String>> slideData = new ArrayList<List<String>>();
+
+        boolean previousBlank = true;
+        for (String line : lines) {
+            if (line.trim().isEmpty()) {
+                previousBlank = true;
+                continue;
+            } else {
+                if (previousBlank) {
+                    // new slide
+                    slideData.add(new ArrayList<String>());
+                    slideDataIndex++;
+                    previousBlank = false;
+                }
+                slideData.get((slideDataIndex)).add(line.trim());
+            }
+        }
+
+        slideDataIndex = 1;
+        boolean response = false;
+        for (List<String> slideDatum : slideData) {
+            // more than one page per slide
+            String effectiveTitle;
+            if (slideData.size() > 1) {
+                effectiveTitle = titleString.trim() + " (" + slideDataIndex + "/" + slideData.size()
+                    + ")";
+            } else {
+                effectiveTitle = titleString.trim();
+            }
+            loadTextIntoSlide(effectiveTitle, slideDatum, response);
+            if (callAndResponse){
+                response = ! response;
+            }
+            slideDataIndex++;
+        }
+
+    }
+
+    private void loadTextIntoSlide(String titleString, List<String> verses, boolean response) {
+        XSLFSlide slide;
+        slide = ppt.createSlide(defaultSlideMaster.getLayout(SlideLayout.TITLE_AND_CONTENT));
+
+        // selection of title place holder
+        XSLFTextShape title = slide.getPlaceholder(0);
+        title.setTextAutofit(TextAutofit.NORMAL);
+        title.clearText();
+        // System.out.println("Title before anything:");
+        // dumpShapeHeight(title);
+        XSLFTextParagraph titlePara = title.addNewTextParagraph();
+        XSLFTextRun titleRun = titlePara.addNewTextRun();
+        titleRun.setText(titleString.trim());
+        titleRun.setFontSize(84.0);
+        titleRun.setFontColor(Color.WHITE);
+        titleRun.setFontFamily(TITLE_FONT);
+        // System.out.println("Resizing title");
+        // resizeTextToBlock(title, this.slideFrameHeight *
+        // this.titlePercentage);
+        resizeTextToBlock(title, title.getAnchor().getHeight());
+        // selection of body place holder
+        XSLFTextShape body = slide.getPlaceholder(1);
+
+        // clear the existing text in the slide
+        body.clearText();
+        body.setTextAutofit(TextAutofit.NORMAL);
+        // System.out.println("Body before anything");
+        // dumpShapeHeight(body);
+
+        // adding new paragraph
+        XSLFTextParagraph paragraph = body.addNewTextParagraph();
+        paragraph.setBullet(false);
+        // XSLFTextBox shape = slide.createTextBox();
+        // XSLFTextParagraph p = shape.addNewTextParagraph();
+        boolean firstVerse = true;
+
+        for (String verse : verses) {
+            if (verse == null) {
+                continue;
+            }
+            if (firstVerse) {
+                firstVerse = false;
+            } else {
+                paragraph.addLineBreak();
+            }
+            XSLFTextRun run = paragraph.addNewTextRun();
+            run.setItalic(response);
+            run.setText(verse);
+            run.setFontFamily(BODY_FONT);
+            run.setFontColor(Color.WHITE);
+            run.setFontSize(globalMaxSize);
+
+        }
+        // dumpShapeHeight(body);
+        // resizeTextToBlock(body, this.slideFrameHeight * this.bodyPercentage);
+
+        resizeTextToBlock(body, body.getAnchor().getHeight());
     }
 
     private static byte[] resizeImage(byte[] fileData, Integer img_width, Integer img_height)

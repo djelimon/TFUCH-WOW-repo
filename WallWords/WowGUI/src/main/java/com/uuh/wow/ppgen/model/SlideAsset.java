@@ -17,6 +17,9 @@ public class SlideAsset {
 
     private StringProperty fileName = new SimpleStringProperty();
 
+    //private File rawAsset;
+
+
     public String getAbsolutePath(){
         return absolutePath.get();
     }

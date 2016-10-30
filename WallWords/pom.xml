@@ -6,7 +6,7 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
-    <module>WowGen</module>
+    <module>WowGUI</module>
     <module>WowSlides</module>
     <module>WowText</module>
   </modules>

@@ -36,7 +36,7 @@
       <ButtonBar layoutX="386.0" layoutY="246.0" prefHeight="40.0" prefWidth="324.0" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0">
         <buttons>
             <Button mnemonicParsing="false" onAction="#generateSlideShow" prefHeight="27.0" prefWidth="93.0" text="Render" />
-            <Button mnemonicParsing="false" onAction="#handleRankAsset" text="Rank" />
+            <Button mnemonicParsing="false" onAction="#handleRankAsset" text="Edit" />
           <Button mnemonicParsing="false" onAction="#handleRemovAsset" text="Remove" />
         </buttons>
       </ButtonBar>
