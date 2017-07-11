@@ -17,7 +17,7 @@ import javafx.scene.control.TextField;
 import java.io.File;
 import java.util.List;
 
-
+import org.apache.poi.sl.usermodel.PictureData.PictureType;
 
 import com.uuh.wow.main.SlideGenerator;
 import com.uuh.wow.ppgen.SlideshowMasterApp;
@@ -59,6 +59,7 @@ public class SlideshowOverviewController {
         filenameColumn.setCellValueFactory(cellData -> cellData.getValue().fileNameProperty());
         pathColumn.setCellValueFactory(cellData -> cellData.getValue().absolutePathProperty());
         globalMaxFontSize.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(2, 100, 100));
+
      // Clear person details.
       //  showPersonDetails(null);
 
@@ -110,10 +111,10 @@ public class SlideshowOverviewController {
 //     * details for the selected person.
 //     */
     @FXML
-    private void handleRankAsset() {
+    private void handleEditAsset() {
         SlideAsset selectedAsset = assetTable.getSelectionModel().getSelectedItem();
         if (selectedAsset != null) {
-            boolean okClicked = composer.showRankAssetDialog(selectedAsset);
+            boolean okClicked = composer.showEditAssetDialog(selectedAsset);
             if (okClicked) {
                 composer.getSlideshowData().sort(new SlideAssetComparator());
             }
@@ -140,6 +141,7 @@ public class SlideshowOverviewController {
 
         // Add observable list data to the table
         assetTable.setItems(composer.getSlideshowData());
+        composer.setGlobalMaxFont(globalMaxFontSize.getValue());
     }
 
     /**
@@ -192,8 +194,6 @@ public class SlideshowOverviewController {
         SlideGenerator generator = new SlideGenerator();
         try {
             generator.setSourceFolder(composer.getWorkingFolder());
-            //generator.setTitlePercentage(0.10);
-            //generator.setPpt(new XMLSlideShow());
             generator.setGlobalMaxSize(globalMaxFontSize.getValue());
             generator.processContentInFolder(composer.getWorkingFolder());
 
@@ -214,6 +214,69 @@ public class SlideshowOverviewController {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    private void genSlideShow(){
+        SlideGenerator generator = new SlideGenerator();
+        boolean headerFile = true;
+        try {
+            ObservableList<SlideAsset> data = composer.getSlideshowData();
+            for (SlideAsset slideAsset : data) {
+                File assetFile = new File(slideAsset.getAbsolutePath());
+                String assetFileName = assetFile.getName().toUpperCase();
+                PictureType picType;
+                Integer maxSize = (slideAsset.getMaxSize() == null)?globalMaxFontSize.getValue():slideAsset.getMaxSize();
+                switch (slideAsset.getAssetType()) {
+
+                    case GRAPHIC:
+                        if(assetFileName.endsWith(".JPG") ||
+                           assetFileName.endsWith(".JPEG")){
+                           picType = PictureType.JPEG;
+                        }else{
+                            picType = PictureType.PNG;
+                        }
+
+                        generator.appendImage(assetFile, picType);
+                        break;
+                    case UNISON:
+                        generator.appendSpacedText(assetFile, false, maxSize, null);
+                        break;
+                    case HYMN:
+                        generator.appendSpacedText(assetFile, false, maxSize, slideAsset.getHymnal().toString());
+                        break;
+                    case RESPONSIVE:
+                        generator.appendSpacedText(assetFile, true, maxSize, null);
+                        break;
+                    case SLIDESHOW:
+                        generator.appendSlides(assetFile, headerFile);
+                        headerFile = false;
+                        break;
+                    default:
+                        break;
+                }
+                generator.appendBlankSlide();
+            }
+
+
+
+            FileChooser fileChooser = new FileChooser();
+
+            FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter(
+                "PowerPoint file (*.pptx)", "*.pptx", "*.PPTX");
+
+            fileChooser.getExtensionFilters().add(extFilter);
+
+            File target = fileChooser.showSaveDialog(composer.getPrimaryStage());
+            if (target != null){
+                generator.dumpSlideShow(target);
+            }
+
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
     }
 
 //    /**

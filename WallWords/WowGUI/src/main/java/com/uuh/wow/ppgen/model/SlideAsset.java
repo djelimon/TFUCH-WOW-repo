@@ -11,6 +11,26 @@ public class SlideAsset {
 
     //private File rawAsset;
 
+    private HymnalType hymnal;
+
+    private Integer maxSize = null;
+
+    public Integer getMaxSize() {
+        return maxSize;
+    }
+
+    public void setMaxSize(Integer maxSize) {
+        this.maxSize = maxSize;
+    }
+
+    public HymnalType getHymnal() {
+        return hymnal;
+    }
+
+    public void setHymnal(HymnalType hymnal) {
+        this.hymnal = hymnal;
+    }
+
     private StringProperty absolutePath = new SimpleStringProperty();
 
     private IntegerProperty rank = new SimpleIntegerProperty();
@@ -18,7 +38,15 @@ public class SlideAsset {
     private StringProperty fileName = new SimpleStringProperty();
 
     //private File rawAsset;
+    private AssetType assetType;
 
+    public void setAssetType(AssetType assetType){
+        this.assetType = assetType;
+    }
+
+    public AssetType getAssetType(){
+        return this.assetType;
+    }
 
     public String getAbsolutePath(){
         return absolutePath.get();

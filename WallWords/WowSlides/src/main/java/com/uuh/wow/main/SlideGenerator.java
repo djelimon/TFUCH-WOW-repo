@@ -457,7 +457,7 @@ public class SlideGenerator {
         currentImageWidth = originalImage.getWidth();
     }
 
-    public void appendSpacedText(File textFile, Boolean callAndResponse, double maxSize) throws Exception {
+    public void appendSpacedText(File textFile, Boolean callAndResponse, double maxSize, String source) throws Exception {
         ArrayList<String> lines = new ArrayList<String>();
         loadTextData(textFile, lines);
 
@@ -502,14 +502,15 @@ public class SlideGenerator {
 
         slideDataIndex = 1;
         boolean response = false;
+        String sourceTag = (source == null) ? "" : " (" + source + " HYMNAL)";
         for (List<String> slideDatum : slideData) {
             // more than one page per slide
             String effectiveTitle;
             if (slideData.size() > 1) {
-                effectiveTitle = titleString.trim() + " (" + slideDataIndex + "/" + slideData.size()
+                effectiveTitle = titleString.trim() + sourceTag + " (" + slideDataIndex + "/" + slideData.size()
                     + ")";
             } else {
-                effectiveTitle = titleString.trim();
+                effectiveTitle = titleString.trim() + sourceTag;
             }
             loadTextIntoSlide(effectiveTitle, slideDatum, response);
             if (callAndResponse){

@@ -1,7 +1,7 @@
 package com.uuh.wow.ppgen.model;
 
-public enum TextAssetType {
+public enum AssetType {
 
-    RESPONSIVE,UNISON
+    GRAPHIC,RESPONSIVE,UNISON,HYMN,SLIDESHOW
 
 }

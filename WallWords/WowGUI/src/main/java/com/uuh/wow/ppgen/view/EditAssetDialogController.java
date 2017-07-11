@@ -3,24 +3,27 @@ package com.uuh.wow.ppgen.view;
 import java.io.File;
 
 import com.uuh.wow.ppgen.SlideshowMasterApp;
+import com.uuh.wow.ppgen.model.AssetType;
+import com.uuh.wow.ppgen.model.HymnalType;
 import com.uuh.wow.ppgen.model.SlideAsset;
-import com.uuh.wow.ppgen.util.DateUtil;
-import com.uuh.wow.ppgen.util.SlideAssetComparator;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
-
 /**
- * Dialog to edit details of a person.
+ * Dialog to edit a slide asset
  *
- * @author Marco Jakob
+ * @author John Elliott
  */
-public class RankAssetDialogController {
+public class EditAssetDialogController {
 
     @FXML
     private TextField rankField;
@@ -28,10 +31,18 @@ public class RankAssetDialogController {
     private Label fileNameLabel;
     @FXML
     private Label pathLabel;
+    @FXML
+    private ComboBox<AssetType> assetType = new ComboBox<AssetType>();
+    @FXML
+    private ComboBox<HymnalType> hymnalType = new ComboBox<HymnalType>();
+    @FXML
+    private Boolean enableSpecificPRops = false;
+    @FXML
+    private Button editSpecificPropsButton;
+    @FXML
+    private Spinner<Integer> assetMaxFontSize;
 
     SlideshowMasterApp composer;
-
-
 
     public void setComposer(SlideshowMasterApp composer) {
         this.composer = composer;
@@ -47,6 +58,11 @@ public class RankAssetDialogController {
      */
     @FXML
     private void initialize() {
+        assetType.getItems().setAll(AssetType.values());
+        hymnalType.getItems().setAll(HymnalType.values());
+        assetMaxFontSize.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(2, 100, 100));
+
+
     }
 
     /**
@@ -69,7 +85,56 @@ public class RankAssetDialogController {
         rankField.setText(asset.getRank().toString());
         fileNameLabel.setText(asset.getFileName());
         pathLabel.setText(asset.getAbsolutePath());
+        String extension = asset.getFileName().toUpperCase();
+        if (asset.getAssetType() == null) {
+            if (extension.endsWith(".TXT")) {
+                assetType.setValue(AssetType.UNISON);
+//                asset.setAssetType(AssetType.HYMN);
+//                hymnalType.setValue(HymnalType.OTHER);
+                if (asset.getMaxSize() == null){
+                    asset.setMaxSize(composer.getGlobalMaxFont());
+                    //asset.setMaxSize(100);
+                }
 
+            } else if (extension.endsWith(".PPTX")) {
+                asset.setAssetType(AssetType.SLIDESHOW);
+
+            } else {
+                asset.setAssetType(AssetType.GRAPHIC);
+                assetType.setValue(AssetType.GRAPHIC);
+
+            }
+        } else {
+            assetType.setValue(asset.getAssetType());
+
+        }
+        syncGUIToAsset(asset);
+
+    }
+
+    private void syncGUIToAsset(SlideAsset asset) {
+        // enable special properties if needed
+        assetType.setValue(asset.getAssetType());
+
+        switch (asset.getAssetType()) {
+            case HYMN:
+                hymnalType.setDisable(false);
+                hymnalType.setValue(asset.getHymnal());
+                break;
+
+            default:
+                hymnalType.setDisable(true);
+                break;
+        }
+//        if (asset.getMaxSize() != null){
+//            //assetMaxFontSize = new Spinner<Integer>(2,composer.getGlobalMaxFont(),asset.getMaxSize());
+//            assetMaxFontSize.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(2, 100, asset.getMaxSize()));
+//            assetMaxFontSize.setDisable(true);
+//        }else{
+//            //assetMaxFontSize = new Spinner<Integer>(2,composer.getGlobalMaxFont(),composer.getGlobalMaxFont());
+//            assetMaxFontSize.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(2, 100, composer.getGlobalMaxFont()));
+//            assetMaxFontSize.setDisable(true);
+//        }
     }
 
     /**
@@ -93,6 +158,10 @@ public class RankAssetDialogController {
             asset.setRank(newRank);
             asset.setAbsolutePath(rankedFile.getAbsolutePath());
             asset.setFileName(rankedFile.getName());
+            asset.setAssetType(assetType.getValue());
+            if (asset.getAssetType() == AssetType.HYMN){
+                asset.setHymnal(hymnalType.getValue());
+            }
             okClicked = true;
             dialogStage.close();
 
@@ -119,7 +188,6 @@ public class RankAssetDialogController {
             errorMessage += "Rank must be populated!\n";
         }
 
-
         try {
             Integer newRank = Integer.valueOf(rankField.getText());
             if (newRank < 0 || newRank > 999) {
@@ -128,8 +196,6 @@ public class RankAssetDialogController {
         } catch (NumberFormatException e) {
             errorMessage += "Rank is invalid integer format!\n";
         }
-
-
 
         if (errorMessage.length() == 0) {
             return true;
@@ -145,5 +211,12 @@ public class RankAssetDialogController {
 
             return false;
         }
+    }
+
+
+    @FXML
+    private void handleAssetTypeSelect(){
+        asset.setAssetType(assetType.getValue());
+        syncGUIToAsset(asset);
     }
 }

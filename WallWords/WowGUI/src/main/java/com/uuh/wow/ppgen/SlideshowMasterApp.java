@@ -5,9 +5,10 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
+import com.uuh.wow.ppgen.model.AssetType;
+import com.uuh.wow.ppgen.model.HymnalType;
 import com.uuh.wow.ppgen.model.SlideAsset;
-import com.uuh.wow.ppgen.view.RankAssetDialogController;
+import com.uuh.wow.ppgen.view.EditAssetDialogController;
 import com.uuh.wow.ppgen.view.MasterLayoutController;
 
 import com.uuh.wow.ppgen.view.PreviewImageDialogController;
@@ -34,6 +35,18 @@ public class SlideshowMasterApp extends Application {
     private BorderPane masterLayout;
     private File workingFolder;
     private Pattern indexPattern = Pattern.compile(INDEX_REGEX);
+    private Integer globalMaxFont;
+
+
+
+    public Integer getGlobalMaxFont() {
+        return globalMaxFont;
+    }
+
+
+    public void setGlobalMaxFont(Integer globalMaxFont) {
+        this.globalMaxFont = globalMaxFont;
+    }
 
     /**
      * The data as an observable list of Persons.
@@ -67,12 +80,29 @@ public class SlideshowMasterApp extends Application {
 	        String path = rankedAsset.getPath();
 	        String absolutePath = rankedAsset.getAbsolutePath();
 	        String name = rankedAsset.getName();
-
-
-
-            slideAsset.setAbsolutePath(absolutePath);
+	        slideAsset.setAbsolutePath(absolutePath);
             slideAsset.setFileName(name);
+            String extension = slideAsset.getFileName().toUpperCase();
+            if (slideAsset.getAssetType() == null) {
+                if (extension.endsWith(".TXT")) {
+                    slideAsset.setAssetType(AssetType.UNISON);
 
+//                    slideAsset.setAssetType(AssetType.HYMN);
+//                    slideAsset.setHymnal(HymnalType.OTHER);
+                    if (slideAsset.getMaxSize() == null){
+                        slideAsset.setMaxSize(getGlobalMaxFont());
+                        //asset.setMaxSize(100);
+                    }
+
+                } else if (extension.endsWith(".PPTX")) {
+                    slideAsset.setAssetType(AssetType.SLIDESHOW);
+
+                } else {
+                    slideAsset.setAssetType(AssetType.GRAPHIC);
+
+
+                }
+            }
 
             this.slideshowData.add(slideAsset);
         }
@@ -158,7 +188,7 @@ public class SlideshowMasterApp extends Application {
 	    try {
             // Load person overview.
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(SlideshowMasterApp.class.getResource("view/SlideshowOverview.fxml"));
+            loader.setLocation(SlideshowMasterApp.class.getResource("/fxml/SlideshowOverview.fxml"));
             AnchorPane personOverview = (AnchorPane) loader.load();
 
             // Set person overview into the center of root layout.
@@ -179,7 +209,8 @@ public class SlideshowMasterApp extends Application {
             // Load root layout from fxml file.
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(SlideshowMasterApp.class
-                    .getResource("view/MasterLayout.fxml"));
+                    .getResource("/fxml/MasterLayout.fxml"));
+            //.getResource("view/MasterLayout.fxml"));
             masterLayout = (BorderPane) loader.load();
 
             // Show the scene containing the root layout.
@@ -207,11 +238,12 @@ public class SlideshowMasterApp extends Application {
      * @param person the person object to be edited
      * @return true if the user clicked OK, false otherwise.
      */
-    public boolean showRankAssetDialog(SlideAsset asset) {
+    public boolean showEditAssetDialog(SlideAsset asset) {
         try {
             // Load the fxml file and create a new stage for the popup dialog.
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(SlideshowMasterApp.class.getResource("view/RankAssetDialogue.fxml"));
+            //loader.setLocation(SlideshowMasterApp.class.getResource("view/EditAssetDialogue.fxml"));
+            loader.setLocation(SlideshowMasterApp.class.getResource("/fxml/EditAssetDialogue.fxml"));
             AnchorPane page = (AnchorPane) loader.load();
 
             // Create the dialog Stage.
@@ -223,10 +255,11 @@ public class SlideshowMasterApp extends Application {
             dialogStage.setScene(scene);
 
             // Set the person into the controller.
-            RankAssetDialogController controller = loader.getController();
+            EditAssetDialogController controller = loader.getController();
+            controller.setComposer(this);
             controller.setDialogStage(dialogStage);
             controller.setAsset(asset);
-            controller.setComposer(this);
+
 
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
@@ -238,6 +271,45 @@ public class SlideshowMasterApp extends Application {
         }
     }
 
+    /**
+     * Opens a dialog to rank an asset, i.e. give it a numeric prefix for sorting purposes. If the user
+     * clicks OK, the changes are saved into the provided slide Asset object and true
+     * is returned.
+     *
+     * @param person the person object to be edited
+     * @return true if the user clicked OK, false otherwise.
+     */
+    public boolean showHymnSpecificEdit(SlideAsset asset) {
+        try {
+            // Load the fxml file and create a new stage for the popup dialog.
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(SlideshowMasterApp.class.getResource("/fxml/HymnEditDialogue.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            // Create the dialog Stage.
+            Stage dialogStage = new Stage();
+            dialogStage.setTitle("Rank Asset");
+            dialogStage.initModality(Modality.WINDOW_MODAL);
+            dialogStage.initOwner(primaryStage);
+            Scene scene = new Scene(page);
+            dialogStage.setScene(scene);
+
+            // Set the person into the controller.
+            EditAssetDialogController controller = loader.getController();
+            controller.setComposer(this);
+            controller.setDialogStage(dialogStage);
+            controller.setAsset(asset);
+
+
+            // Show the dialog and wait until the user closes it
+            dialogStage.showAndWait();
+
+            return controller.isOkClicked();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     /**
      * Opens a dialog to rank an asset, i.e. give it a numeric prefix for sorting purposes. If the user
@@ -251,7 +323,7 @@ public class SlideshowMasterApp extends Application {
         try {
             // Load the fxml file and create a new stage for the popup dialog.
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(SlideshowMasterApp.class.getResource("view/EditTextDialogue.fxml"));
+            loader.setLocation(SlideshowMasterApp.class.getResource("/fxml/EditTextDialogue.fxml"));
             AnchorPane page = (AnchorPane) loader.load();
 
             // Create the dialog Stage.
@@ -263,10 +335,11 @@ public class SlideshowMasterApp extends Application {
             dialogStage.setScene(scene);
 
             // Set the person into the controller.
-            RankAssetDialogController controller = loader.getController();
+            EditAssetDialogController controller = loader.getController();
+            controller.setComposer(this);
             controller.setDialogStage(dialogStage);
             controller.setAsset(asset);
-            controller.setComposer(this);
+
 
             // Show the dialog and wait until the user closes it
             dialogStage.showAndWait();
@@ -290,7 +363,7 @@ public class SlideshowMasterApp extends Application {
         try {
             // Load the fxml file and create a new stage for the popup dialog.
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(SlideshowMasterApp.class.getResource("view/PreviewImageDialogue.fxml"));
+            loader.setLocation(SlideshowMasterApp.class.getResource("/fxml/PreviewImageDialogue.fxml"));
             AnchorPane page = (AnchorPane) loader.load();
 
             // Create the dialog Stage.
